@@ -25,13 +25,13 @@ export default function Footer() {
               <Github size={20} />
             </a>
             <a
-              href="#"
+              href="https://www.linkedin.com/in/riyel/"
               className="p-3 rounded-full bg-slate-100 dark:bg-slate-800 hover:text-primary transition-all"
             >
               <Linkedin size={20} />
             </a>
             <a
-              href="#"
+              href="https://x.com/RiYeL_"
               className="p-3 rounded-full bg-slate-100 dark:bg-slate-800 hover:text-primary transition-all"
             >
               <Twitter size={20} />

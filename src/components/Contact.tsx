@@ -74,7 +74,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <p className="text-sm opacity-60">Phone</p>
-                  <p className="font-bold">+880 (Placeholder)</p>
+                  <p className="font-bold">+880 1639851559</p>
                 </div>
               </div>
             </div>
