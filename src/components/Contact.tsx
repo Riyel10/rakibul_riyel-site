@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import { motion } from "motion/react";
 import { Send, Mail, MapPin, Phone, Loader2 } from "lucide-react";
 
@@ -12,24 +13,19 @@ export default function Contact() {
     setStatus("loading");
 
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const response = await axios.post("/api/contact", formData);
 
-      const data = await response.json();
-      if (response.ok) {
+      if (response.status === 200) {
         setStatus("success");
-        setResponseMsg(data.success);
+        setResponseMsg(response.data.success);
         setFormData({ name: "", email: "", message: "" });
       } else {
         setStatus("error");
-        setResponseMsg(data.error || "Something went wrong.");
+        setResponseMsg(response.data.error || "Something went wrong.");
       }
-    } catch (err) {
+    } catch (err: any) {
       setStatus("error");
-      setResponseMsg("Failed to connect to the server.");
+      setResponseMsg(err.response?.data?.error || "Failed to connect to the server.");
     }
   };
 
