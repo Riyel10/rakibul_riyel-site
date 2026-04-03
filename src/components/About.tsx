@@ -34,12 +34,12 @@ export default function About() {
             className="lg:w-1/2"
           >
             <div className="relative group">
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary to-secondary rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000 pointer-events-none"></div>
               <div className="relative aspect-square rounded-2xl overflow-hidden glass">
                 <img
                   src={profileImage}
                   alt="Rakibul Riyel"
-                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                  className="w-full h-full object-cover grayscale-0 hover:grayscale transition-all duration-500"
                   referrerPolicy="no-referrer"
                 />
               </div>
