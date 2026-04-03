@@ -3,8 +3,13 @@ import path from "path";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import cors from "cors";
+import mongoose from "mongoose";
 
 dotenv.config();
+
+mongoose.connect(process.env.MONGO_URI!)
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
 
 const app = express();
 
@@ -15,6 +20,15 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors());
 
+const messageSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  message: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Message = mongoose.model("Message", messageSchema);
+
 // ================= API ROUTE =================
 app.post("/api/contact", async (req, res) => {
   const { name, email, message } = req.body;
@@ -24,28 +38,19 @@ app.post("/api/contact", async (req, res) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: "rakibulriyel1171@gmail.com",
-      subject: `New Portfolio Message from ${name}`,
-      text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
-    };
-
-    await transporter.sendMail(mailOptions);
+    const newMessage = new Message({ name, email, message });
+    await newMessage.save();
 
     res.json({ success: "Message sent successfully!" });
-  } catch (error) {
-    console.error("Error sending email:", error);
-    res.status(500).json({ error: "Failed to send message." });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save message" });
   }
+});
+
+// ================= GET MESSAGES ROUTE =================
+app.get("/api/messages", async (req, res) => {
+  const messages = await Message.find().sort({ createdAt: -1 });
+  res.json(messages);
 });
 
 // ================= PRODUCTION FRONTEND =================
