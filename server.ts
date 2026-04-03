@@ -5,11 +5,24 @@ import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
 
+// Load env vars early
 dotenv.config();
 
-mongoose.connect(process.env.MONGO_URI!)
+if (!process.env.MONGO_URI) {
+  console.error("🚨 Missing environment variable: MONGO_URI");
+  process.exit(1);
+}
+
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  console.warn("⚠️  EMAIL_USER or EMAIL_PASS is missing. Email sending may fail.");
+}
+
+mongoose.connect(process.env.MONGO_URI as string)
   .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+  .catch(err => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 const app = express();
 
