@@ -83,8 +83,6 @@ app.post("/api/contact", async (req, res) => {
     await newMessage.save();
 
     // Send email WITHOUT awaiting — fire and forget
-    console.log("Attempting to send email to:", process.env.EMAIL_USER);
-    console.log("Resend API key exists:", !!process.env.RESEND_API_KEY);
     resend.emails.send({
       from: "onboarding@resend.dev",
       to: process.env.EMAIL_USER as string,
