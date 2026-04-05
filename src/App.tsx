@@ -14,8 +14,16 @@ import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import ScrollProgress from "./components/ScrollProgress";
 import BackToTop from "./components/BackToTop";
+import Admin from "./components/Admin";
 
 export default function App() {
+  // Simple client-side route check for /admin
+  const isAdmin = window.location.pathname === "/admin";
+
+  if (isAdmin) {
+    return <Admin />;
+  }
+
   return (
     <div className="min-h-screen">
       <ScrollProgress />
@@ -33,4 +41,3 @@ export default function App() {
     </div>
   );
 }
-

@@ -17,6 +17,10 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
   console.warn("⚠️  EMAIL_USER or EMAIL_PASS is missing. Email sending may fail.");
 }
 
+if (!process.env.ADMIN_PASSWORD) {
+  console.warn("⚠️  ADMIN_PASSWORD is missing. Admin dashboard will not be protected.");
+}
+
 mongoose.connect(process.env.MONGO_URI as string)
   .then(() => console.log("MongoDB Connected"))
   .catch(err => {
@@ -26,7 +30,6 @@ mongoose.connect(process.env.MONGO_URI as string)
 
 const app = express();
 
-// ✅ FIXED PORT (Render compatible)
 const PORT = process.env.PORT || 3000;
 
 // ✅ Middleware
@@ -36,20 +39,43 @@ app.use(cors({
     "https://rakibul-riyel-site.vercel.app",
     "http://localhost:5000"
   ],
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "DELETE"],
   credentials: true
 }));
 
+// ================= MONGOOSE SCHEMA =================
 const messageSchema = new mongoose.Schema({
   name: String,
   email: String,
   message: String,
+  read: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 
 const Message = mongoose.model("Message", messageSchema);
 
-// ================= API ROUTE =================
+// ================= NODEMAILER SETUP =================
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+// ================= ADMIN AUTH MIDDLEWARE =================
+function adminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer <token>
+
+  if (!token || token !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  next();
+}
+
+// ================= CONTACT ROUTE =================
 app.post("/api/contact", async (req, res) => {
   const { name, email, message } = req.body;
 
@@ -58,29 +84,82 @@ app.post("/api/contact", async (req, res) => {
   }
 
   try {
+    // Save to MongoDB
     const newMessage = new Message({ name, email, message });
     await newMessage.save();
 
+    // Send email notification to you
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      await transporter.sendMail({
+        from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
+        to: process.env.EMAIL_USER,
+        subject: `📬 New message from ${name}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
+            <h2 style="color: #6366f1;">New Contact Message</h2>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+            <p><strong>Message:</strong></p>
+            <div style="background: #f8fafc; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${message}</div>
+            <p style="color: #94a3b8; font-size: 12px; margin-top: 24px;">Sent from your portfolio contact form</p>
+          </div>
+        `,
+      });
+    }
+
     res.json({ success: "Message sent successfully!" });
   } catch (err) {
+    console.error("Contact error:", err);
     res.status(500).json({ error: "Failed to save message" });
   }
 });
 
-// ================= GET MESSAGES ROUTE =================
-app.get("/api/messages", async (req, res) => {
-  const messages = await Message.find().sort({ createdAt: -1 });
-  res.json(messages);
+// ================= ADMIN ROUTES (protected) =================
+
+// Get all messages
+app.get("/api/admin/messages", adminAuth, async (req, res) => {
+  try {
+    const messages = await Message.find().sort({ createdAt: -1 });
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch messages" });
+  }
+});
+
+// Mark message as read
+app.post("/api/admin/messages/:id/read", adminAuth, async (req, res) => {
+  try {
+    await Message.findByIdAndUpdate(req.params.id, { read: true });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update message" });
+  }
+});
+
+// Delete a message
+app.delete("/api/admin/messages/:id", adminAuth, async (req, res) => {
+  try {
+    await Message.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete message" });
+  }
+});
+
+// Admin login (just validates password)
+app.post("/api/admin/login", (req, res) => {
+  const { password } = req.body;
+  if (password === process.env.ADMIN_PASSWORD) {
+    res.json({ success: true, token: process.env.ADMIN_PASSWORD });
+  } else {
+    res.status(401).json({ error: "Invalid password" });
+  }
 });
 
 // ================= PRODUCTION FRONTEND =================
-
-// Serve frontend build
 const distPath = path.join(process.cwd(), "dist");
-
 app.use(express.static(distPath));
 
-// Handle React routing
 app.get("*", (req, res) => {
   res.sendFile(path.join(distPath, "index.html"));
 });
