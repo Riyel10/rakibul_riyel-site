@@ -16,7 +16,7 @@ export default function Contact() {
       const BACKEND_URL = import.meta.env.VITE_API_URL || "";
       const response = await axios.post(`${BACKEND_URL}/api/contact`, formData);
 
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         setStatus("success");
         setResponseMsg(response.data.success);
         setFormData({ name: "", email: "", message: "" });
