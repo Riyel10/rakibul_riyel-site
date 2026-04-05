@@ -14,16 +14,10 @@ export default function Contact() {
 
     try {
       const BACKEND_URL = import.meta.env.VITE_API_URL || "";
-      const response = await axios.post(`${BACKEND_URL}/api/contact`, formData);
-
-      if (response.status === 200 || response.status === 201) {
-        setStatus("success");
-        setResponseMsg(response.data.success);
-        setFormData({ name: "", email: "", message: "" });
-      } else {
-        setStatus("error");
-        setResponseMsg(response.data.error || "Something went wrong.");
-      }
+      await axios.post(`${BACKEND_URL}/api/contact`, formData);
+      setStatus("success");
+      setResponseMsg("Message sent successfully!");
+      setFormData({ name: "", email: "", message: "" });
     } catch (err: any) {
       setStatus("error");
       setResponseMsg(err.response?.data?.error || "Failed to connect to the server.");
