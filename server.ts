@@ -88,9 +88,9 @@ app.post("/api/contact", async (req, res) => {
     const newMessage = new Message({ name, email, message });
     await newMessage.save();
 
-    // Send email notification to you
+    // Send email WITHOUT awaiting — fire and forget
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      await transporter.sendMail({
+      transporter.sendMail({
         from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
         to: process.env.EMAIL_USER,
         subject: `📬 New message from ${name}`,
@@ -101,16 +101,17 @@ app.post("/api/contact", async (req, res) => {
             <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
             <p><strong>Message:</strong></p>
             <div style="background: #f8fafc; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${message}</div>
-            <p style="color: #94a3b8; font-size: 12px; margin-top: 24px;">Sent from your portfolio contact form</p>
           </div>
         `,
-      });
+      }).catch(err => console.error("Email failed:", err)); // ← no await, just log error
     }
 
-    res.json({ success: "Message sent successfully!" });
+    // Return success immediately after saving — don't wait for email
+    return res.json({ success: "Message sent successfully!" });
+
   } catch (err) {
     console.error("Contact error:", err);
-    res.status(500).json({ error: "Failed to save message" });
+    return res.status(500).json({ error: "Failed to save message" });
   }
 });
 
