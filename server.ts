@@ -1,6 +1,6 @@
 import express from "express";
 import path from "path";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
@@ -13,8 +13,8 @@ if (!process.env.MONGO_URI) {
   process.exit(1);
 }
 
-if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-  console.warn("⚠️  EMAIL_USER or EMAIL_PASS is missing. Email sending may fail.");
+if (!process.env.RESEND_API_KEY) {
+  console.warn("⚠️  RESEND_API_KEY is missing. Email sending may fail.");
 }
 
 if (!process.env.ADMIN_PASSWORD) {
@@ -54,14 +54,8 @@ const messageSchema = new mongoose.Schema({
 
 const Message = mongoose.model("Message", messageSchema);
 
-// ================= NODEMAILER SETUP =================
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// ================= RESEND SETUP =================
+const resend = new Resend(process.env.re_PeBaSdfv_MRZh3WasD17G3UCugf2R8iUW);
 
 // ================= ADMIN AUTH MIDDLEWARE =================
 function adminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -89,22 +83,20 @@ app.post("/api/contact", async (req, res) => {
     await newMessage.save();
 
     // Send email WITHOUT awaiting — fire and forget
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      transporter.sendMail({
-        from: `"Portfolio Contact" <${process.env.EMAIL_USER}>`,
-        to: process.env.EMAIL_USER,
-        subject: `📬 New message from ${name}`,
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
-            <h2 style="color: #6366f1;">New Contact Message</h2>
-            <p><strong>Name:</strong> ${name}</p>
-            <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-            <p><strong>Message:</strong></p>
-            <div style="background: #f8fafc; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${message}</div>
-          </div>
-        `,
-      }).catch(err => console.error("Email failed:", err)); // ← no await, just log error
-    }
+    resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: process.env.EMAIL_USER as string,
+      subject: `📬 New message from ${name}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h2 style="color: #6366f1;">New Contact Message</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+          <p><strong>Message:</strong></p>
+          <div style="background: #f8fafc; padding: 16px; border-radius: 8px; white-space: pre-wrap;">${message}</div>
+        </div>
+      `,
+    }).catch(err => console.error("Email failed:", err)); // ← no await, just log error
 
     // Return success immediately after saving — don't wait for email
     return res.json({ success: "Message sent successfully!" });
