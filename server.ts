@@ -32,7 +32,12 @@ const PORT = process.env.PORT || 3000;
 // ✅ Middleware
 app.use(express.json());
 app.use(cors({
-  origin: ["https://your-vercel-app.vercel.app", "http://localhost:5173"]
+  origin: [
+    "https://rakibul-riyel-site.vercel.app",
+    "http://localhost:5000"
+  ],
+  methods: ["GET", "POST"],
+  credentials: true
 }));
 
 const messageSchema = new mongoose.Schema({
