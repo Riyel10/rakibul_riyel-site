@@ -13,7 +13,8 @@ export default function Contact() {
     setStatus("loading");
 
     try {
-      const response = await axios.post("/api/contact", formData);
+      const BACKEND_URL = import.meta.env.VITE_API_URL || "";
+      const response = await axios.post(`${BACKEND_URL}/api/contact`, formData);
 
       if (response.status === 200) {
         setStatus("success");
