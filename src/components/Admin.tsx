@@ -66,6 +66,20 @@ export default function Admin() {
     }
   }, [token]);
 
+  // Auto logout when user leaves the page
+useEffect(() => {
+  if (!token) return;
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === "hidden") {
+      handleLogout();
+    }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+}, [token]);
+
   // ===== AUTH =====
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
