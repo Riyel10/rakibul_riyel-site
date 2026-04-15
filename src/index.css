@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
+@plugin "@tailwindcss/typography";
 
 @theme {
   --color-primary: #06b6d4;

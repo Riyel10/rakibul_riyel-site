@@ -15,14 +15,14 @@ import Footer from "./components/Footer";
 import ScrollProgress from "./components/ScrollProgress";
 import BackToTop from "./components/BackToTop";
 import Admin from "./components/Admin";
+import Blog from "./components/Blog";
+import BlogPost from "./components/BlogPost";
 
 export default function App() {
-  // Simple client-side route check for /admin
-  const isAdmin = window.location.pathname === "/admin";
+  const path = window.location.pathname;
 
-  if (isAdmin) {
-    return <Admin />;
-  }
+  if (path === "/admin") return <Admin />;
+  if (path.startsWith("/blog/")) return <BlogPost id={path.replace("/blog/", "")} />;
 
   return (
     <div className="min-h-screen">
@@ -34,6 +34,7 @@ export default function App() {
         <Skills />
         <Projects />
         <Resume />
+        <Blog />
         <Contact />
       </main>
       <Footer />
